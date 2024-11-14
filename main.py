@@ -7,7 +7,7 @@ pygame.init()
 # Configuración de la pantalla
 ANCHO, ALTO = 800, 600
 screen = pygame.display.set_mode((ANCHO, ALTO))
-pygame.display.set_caption("Juego de Puentes Infinito")
+pygame.display.set_caption("Juego de Puentes")
 
 # Colores
 COLOR_FONDO = (135, 206, 235)  # Azul cielo
@@ -19,8 +19,10 @@ COLOR_PUENTE = (0, 0, 0)  # Negro
 TAMAÑO_JUGADOR = 20
 VELOCIDAD_CRECE_PUENTE = 5
 VELOCIDAD_DESPLAZAMIENTO_PANTALLA = 5
-posicion_jugador_x = 100
+posicion_jugador_x = 400
 posicion_jugador_y = ALTO - 100
+IMAGEN_FONDO = pygame.image.load("media/fondo.jpg")
+posicion_fondo = 0
 
 # Listas de plataformas y variables del puente
 plataformas = []
@@ -30,9 +32,12 @@ puente_caido = False
 longitud_puente = 0
 moviendo_jugador = False
 plataforma_index = 0
-desplazamiento_completo = False
+desplazamiento_fondo = False
+desplazamiento_actual = 0  # Cantidad desplazada hasta ahora
 
-
+# ancho de la primera plataforma
+ancho =  ANCHO / 2 + TAMAÑO_JUGADOR * 2
+plataformas.append(pygame.Rect(0, posicion_jugador_y, ancho, 20))
 
 # Generación de plataformas aleatorias
 def generar_plataforma(x_pos):
@@ -41,7 +46,7 @@ def generar_plataforma(x_pos):
         yield pygame.Rect(x_pos, posicion_jugador_y, ancho, 20)
 
 # Inicialización de plataformas
-x_inicial = posicion_jugador_x
+x_inicial = plataformas[0].width + random.randint(100, 200)
 for _ in range(5):  # Comenzamos con 5 plataformas
 
     plataformas.append(next(generar_plataforma(x_inicial)))
@@ -85,61 +90,42 @@ while running:
 
     # Movimiento del jugador o desplazamiento de plataformas
     if moviendo_jugador:
-        if posicion_jugador_x < ANCHO - 200:  # Si el jugador está lejos del borde derecho
-            posicion_jugador_x += VELOCIDAD_DESPLAZAMIENTO_PANTALLA
-        else:
+        # Se calcula el desplazamiento cuando comienza el movimiento
+        if desplazamiento_actual == 0:
+            desplazamiento_objetivo = plataformas[plataforma_index + 1].left - posicion_jugador_x
 
-            # Desplaza todas las plataformas hacia la izquierda
+        # Desplazar plataformas gradualmente
+        if desplazamiento_actual < desplazamiento_objetivo:
             for plataforma in plataformas:
                 plataforma.x -= VELOCIDAD_DESPLAZAMIENTO_PANTALLA
-
-            # Desplaza el puente también
-            longitud_puente -= VELOCIDAD_DESPLAZAMIENTO_PANTALLA
-
-            # Generar nuevas plataformas si es necesario
-            # Verificar si faltan plataformas en el espacio visible
-
-        # Si el jugador llega a la siguiente plataforma
-        if plataformas[plataforma_index].right + longitud_puente <= posicion_jugador_x + TAMAÑO_JUGADOR:
-            # Alinea el jugador con la siguiente plataforma
+            desplazamiento_actual += VELOCIDAD_DESPLAZAMIENTO_PANTALLA
+        else:
+            # Si el desplazamiento se completó, alinea el jugador y reinicia
             plataforma_index += 1
-            posicion_jugador_x = plataformas[plataforma_index].left
+            desplazamiento_actual = 0  # Reinicia el desplazamiento
             moviendo_jugador = False  # Deja de mover al jugador
             longitud_puente = 0  # Reinicia la longitud del puente
 
-        # Posicion a partir de la cual se desplaza tó
-        if posicion_jugador_x >= ANCHO - 400:
-            desplazamiento_completo = True
 
-        # Se desplaza tó
-        if desplazamiento_completo:
-            # Calcular cuánto se debe desplazar para alinear la plataforma actual al inicio
-            desplazamiento = plataformas[plataforma_index].left
-
-            # Desplaza todas las plataformas
-            for plataforma in plataformas:
-                plataforma.x -= desplazamiento
-
-            # Ajusta la posición del jugador
-            posicion_jugador_x -= desplazamiento
-
-            # Desactiva el desplazamiento completo
-            desplazamiento_completo = False
 
     while len(plataformas) < 5:
-        print("ha entrao")
         # Generar nueva plataforma al final
         nueva_x = plataformas[-1].right + random.randint(100, 200)
         plataformas.append(next(generar_plataforma(nueva_x)))
 
     if plataformas[0].right < 0:
-        print("se ha eliminao")
         plataformas.pop(0)
-        print(len(plataformas))
         plataforma_index-=1
 
     # Dibujado de la pantalla
-    screen.fill(COLOR_FONDO)
+    screen.blit(IMAGEN_FONDO, (posicion_fondo, 0))
+    screen.blit(IMAGEN_FONDO,  (posicion_fondo + screen.get_width(), 0))
+    if moviendo_jugador:
+        posicion_fondo -= 0.5
+
+    if posicion_fondo <= -screen.get_width():
+        posicion_fondo = 0
+
 
     # Dibujar plataformas
     for plataforma in plataformas:
@@ -158,6 +144,6 @@ while running:
                          (plataformas[plataforma_index].right + longitud_puente, posicion_jugador_y), 5)
 
     pygame.display.flip()
-    pygame.time.Clock().tick(30)  # 30 FPS
+    pygame.time.Clock().tick(60)  # 30 FPS
 
 pygame.quit()
