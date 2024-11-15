@@ -1,6 +1,9 @@
 import pygame
 import random
 
+import constantes
+from Utils import Utils
+
 # Inicialización de Pygame
 pygame.init()
 
@@ -16,13 +19,23 @@ COLOR_JUGADOR = (255, 69, 0)  # Naranja
 COLOR_PUENTE = (0, 0, 0)  # Negro
 
 # Parámetros del juego
-TAMAÑO_JUGADOR = 20
 VELOCIDAD_CRECE_PUENTE = 5
 VELOCIDAD_DESPLAZAMIENTO_PANTALLA = 5
 posicion_jugador_x = 400
 posicion_jugador_y = ALTO - 100
 IMAGEN_FONDO = pygame.image.load("media/fondo.jpg")
 posicion_fondo = 0
+
+# Parametros jugador animacion
+reposo_imagenes =  Utils.load_animation(constantes.RUTA_DINO_REPOSO, 4, constantes.ESCALA)
+imagen_rect = reposo_imagenes[0].get_rect()
+TAMAÑO_JUGADOR = imagen_rect.width
+cron_animaciones = 0
+velocidad_animacion = 0.2
+sprite_actual = 0
+
+caminando_imagenes = Utils.load_animation(constantes.RUTA_DINO_CAMINANDO, 6, constantes.ESCALA)
+
 
 # Listas de plataformas y variables del puente
 plataformas = []
@@ -34,6 +47,7 @@ moviendo_jugador = False
 plataforma_index = 0
 desplazamiento_fondo = False
 desplazamiento_actual = 0  # Cantidad desplazada hasta ahora
+mantenido = False
 
 # ancho de la primera plataforma
 ancho =  ANCHO / 2 + TAMAÑO_JUGADOR * 2
@@ -52,6 +66,8 @@ for _ in range(5):  # Comenzamos con 5 plataformas
     plataformas.append(next(generar_plataforma(x_inicial)))
     x_inicial += plataformas[-1].width + random.randint(100, 200)
 
+
+
 # Bucle del juego
 running = True
 while running:
@@ -59,13 +75,31 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and not puente_caido:
-                creciendo_puente = True
-        elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_SPACE:
-                creciendo_puente = False
-                puente_caido = True  # El puente cae al soltar la barra
+
+        elif not moviendo_jugador:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE and not puente_caido:
+                    creciendo_puente = True
+                    mantenido = True
+            elif event.type == pygame.KEYUP and mantenido:
+                if event.key == pygame.K_SPACE:
+                    creciendo_puente = False
+                    puente_caido = True# El puente cae al soltar la barra
+                    mantenido = False
+
+
+    # Animacion reposo
+    if not moviendo_jugador:
+        cron_animaciones += velocidad_animacion / 2
+    else:
+        cron_animaciones += velocidad_animacion
+
+    if cron_animaciones >= 1:
+        if not moviendo_jugador:
+            sprite_actual = (sprite_actual + 1) % len(reposo_imagenes)
+        else:
+            sprite_actual = (sprite_actual + 1) % len(caminando_imagenes)
+        cron_animaciones = 0
 
     # Lógica del puente
     if creciendo_puente:
@@ -105,6 +139,9 @@ while running:
             desplazamiento_actual = 0  # Reinicia el desplazamiento
             moviendo_jugador = False  # Deja de mover al jugador
             longitud_puente = 0  # Reinicia la longitud del puente
+            sprite_actual = 0
+
+
 
 
 
@@ -132,8 +169,10 @@ while running:
         pygame.draw.rect(screen, COLOR_PLATAFORMA, plataforma)
 
     # Dibujar jugador
-    pygame.draw.rect(screen, COLOR_JUGADOR,
-                     (posicion_jugador_x, posicion_jugador_y - TAMAÑO_JUGADOR, TAMAÑO_JUGADOR, TAMAÑO_JUGADOR))
+    if not moviendo_jugador:
+        screen.blit(reposo_imagenes[sprite_actual], (posicion_jugador_x, posicion_jugador_y - imagen_rect.height +10 ) )
+    else:
+        screen.blit(caminando_imagenes[sprite_actual], (posicion_jugador_x, posicion_jugador_y - imagen_rect.height +10 ) )
 
     # Dibujar puente
     if creciendo_puente:
@@ -144,6 +183,6 @@ while running:
                          (plataformas[plataforma_index].right + longitud_puente, posicion_jugador_y), 5)
 
     pygame.display.flip()
-    pygame.time.Clock().tick(60)  # 30 FPS
+    pygame.time.Clock().tick(60)  # 60 FPS
 
 pygame.quit()
