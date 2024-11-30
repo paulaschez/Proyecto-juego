@@ -5,6 +5,7 @@ import constantes
 from Jugador import Jugador
 from Plataforma import Plataforma
 from Puente import Puente
+from pantalla_game_over import PantallaGameOver
 
 pygame.init()
 
@@ -55,6 +56,8 @@ def verificar_alcance_puente():
 
 # Bucle del juego
 running = True
+jugando = True  # Variable para saber si estamos jugando o en la pantalla de Game Over
+pantalla_game_over = PantallaGameOver()  # Crear instancia de la pantalla de Game Over
 
 while running:
     # Manejo de enventos
@@ -62,6 +65,28 @@ while running:
         # Si el jugador cierra el juego se termina el bucle, y el juego
         if event.type == pygame.QUIT:
             running = False
+
+        # Si el juego ha terminado y estamos mostrando la pantalla de Game Over
+        if not jugando:
+            resultado = pantalla_game_over.manejar_eventos(event)
+            if resultado == 'reiniciar':
+                # Reinicia el juego
+                jugador = Jugador()
+                puente = Puente()
+                plataformas.clear()
+                plataformas.append(Plataforma(0, ancho / 2 + jugador.rect.width * 2))
+                plataforma_index = 0
+                x_inicial = next(generar_espacio(0))
+                for _ in range(5):
+                    plataformas.append(next(generar_plataforma(x_inicial)))
+                    x_inicial += next(generar_espacio())
+                jugando = True  # Volver al juego
+                desplazamiento_actual = 0  # Reset desplazamiento
+                jugador.posicion_jugador_y = constantes.POSICION_J_Y  # Reset de la posición del jugador
+
+            elif resultado == 'salir':
+                running = False  # Si presionas Escape, sale del juego
+
         # Si el dinosaurio no esta en movimiento
         elif not jugador.moviendose:
             # Si el jugador mantiene presionada la barra espaciadora (solo cuando esta quieto el dinosaurio)
@@ -76,75 +101,92 @@ while running:
                     puente.cayendo = True
                     mantenido = False
 
-    jugador.actualizar_animacion()
-    puente.actualizar()
+    if jugando:
+        jugador.actualizar_animacion()
+        puente.actualizar()
 
-    if puente.caido:
-        puente.caido = False
-
-        if verificar_alcance_puente():
+        if puente.caido:
+            puente.caido = False
             jugador.moviendose = True
             jugador.cambiar_animacion("caminando")
-        else:
-            print("¡Has caído! Intenta de nuevo.")
-            running = False  # Termina el juego"""
-
-    # Mientras el jugador se mueve
-    if jugador.moviendose:
-        # Se desplaza el fondo
-        posicion_fondo -= 0.5
 
 
-        # Se calcula el desplazamiento objetivo cuando comienza el movimiento
-        if desplazamiento_actual == 0:
-            desplazamiento_objetivo = plataformas[plataforma_index + 1].rect.left - jugador.posicion_jugador_x
+        # Mientras el jugador se mueve
+        if jugador.moviendose:
+            # Se desplaza el fondo
+            posicion_fondo -= 0.5
 
-        # Se desplazan las plataformas gradualmente hasta que llega al objetivo
-        if desplazamiento_actual < desplazamiento_objetivo:
-            for plataforma in plataformas:
-                plataforma.rect.x -= constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
-            desplazamiento_actual += constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
-        else:
-            # Si el desplazamiento se completó, alinea el jugador y reinicia
+            if verificar_alcance_puente():
+                # Se calcula el desplazamiento objetivo cuando comienza el movimiento
+                if desplazamiento_actual == 0:
+                    desplazamiento_objetivo = plataformas[plataforma_index + 1].rect.left - jugador.posicion_jugador_x
 
-            plataforma_index += 1 # Se aumenta el indice de la plataforma en la que se encuentra
-            desplazamiento_actual = 0  # Reinicia el desplazamiento
-            jugador.moviendose = False  # Deja de mover al jugador
-            jugador.cambiar_animacion("reposo") # Cambia la animacion por la de reposo
-            puente.reiniciar()  # Reinicia la longitud del puente
+                # Se desplazan las plataformas gradualmente hasta que llega al objetivo
+                if desplazamiento_actual < desplazamiento_objetivo:
+                    for plataforma in plataformas:
+                        plataforma.rect.x -= constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
+                    desplazamiento_actual += constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
+                else:
+                    # Si el desplazamiento se completó, alinea el jugador y reinicia
+
+                    plataforma_index += 1 # Se aumenta el indice de la plataforma en la que se encuentra
+                    desplazamiento_actual = 0  # Reinicia el desplazamiento
+                    jugador.moviendose = False  # Deja de mover al jugador
+                    jugador.cambiar_animacion("reposo") # Cambia la animacion por la de reposo
+                    puente.reiniciar()  # Reinicia la longitud del puente
+            else:
+
+                if desplazamiento_actual == 0:
+                    desplazamiento_objetivo = puente.longitud + jugador.rect.width*2
+
+                # Se desplazan las plataformas gradualmente hasta que llega al objetivo
+                if desplazamiento_actual < desplazamiento_objetivo:
+                    for plataforma in plataformas:
+                        plataforma.rect.x -= constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
+                    desplazamiento_actual += constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
+                else:
+                    # Si el desplazamiento se completó, alinea el jugador y reinicia
+                    jugador.cambiar_animacion("muerte")
+                    jugador.posicion_jugador_y += constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
+                    jugador.actualizar_animacion()
+                    if jugador.posicion_jugador_y >= jugador.rect.height + alto:
+                        jugando = False
 
 
-    # Mientras que las plataformas que estan en el array sea menor que cinco, seguira añadadiendo una al final
-    while len(plataformas) < 5:
-        # Generar nueva plataforma al final
-        nueva_x = plataformas[-1].rect.right + random.randint(100, 200)
-        plataformas.append(next(generar_plataforma(nueva_x)))
+        # Mientras que las plataformas que estan en el array sea menor que cinco, seguira añadadiendo una al final
+        while len(plataformas) < 5:
+            # Generar nueva plataforma al final
+            nueva_x = plataformas[-1].rect.right + random.randint(100, 200)
+            plataformas.append(next(generar_plataforma(nueva_x)))
 
-    # Eliminar las plataformas de la izquierda que se salgan de la pantalla
-    if plataformas[0].rect.right < 0:
-        plataformas.pop(0)
-        plataforma_index -= 1
-
-
-    # Dibujado de pantalla
-    pantalla.blit(imagen_fondo, (posicion_fondo, 0))
-    pantalla.blit(imagen_fondo, (posicion_fondo + pantalla.get_width(), 0))
-
-    if posicion_fondo <= -pantalla.get_width():
-        posicion_fondo = 0
+        # Eliminar las plataformas de la izquierda que se salgan de la pantalla
+        if plataformas[0].rect.right < 0:
+            plataformas.pop(0)
+            plataforma_index -= 1
 
 
-    # Dibujado de plataformas
-    for plataforma in plataformas:
-        plataforma.draw(pantalla)
+        # Dibujado de pantalla
+        pantalla.blit(imagen_fondo, (posicion_fondo, 0))
+        pantalla.blit(imagen_fondo, (posicion_fondo + pantalla.get_width(), 0))
 
-    # Dibujado de jugador
-    jugador.draw(pantalla)
+        if posicion_fondo <= -pantalla.get_width():
+            posicion_fondo = 0
 
-    # Dibujado de puente
-    puente.dibujar(pantalla, plataformas[plataforma_index].rect)
 
-    pygame.display.flip()
+        # Dibujado de plataformas
+        for plataforma in plataformas:
+            plataforma.draw(pantalla)
+
+        # Dibujado de jugador
+        jugador.draw(pantalla)
+
+        # Dibujado de puente
+        puente.dibujar(pantalla, plataformas[plataforma_index].rect)
+
+        pygame.display.flip()
+    else:
+        pantalla_game_over.mostrar(pantalla)
+        pygame.display.flip()  # Actualiza la pantalla
     pygame.time.Clock().tick(60)
 
 pygame.quit()

@@ -15,7 +15,7 @@ class Jugador:
         self.animaciones = {
             "caminando":Utils.load_animation(constantes.RUTA_DINO_CAMINANDO, 6, constantes.ESCALA),
             "reposo": Utils.load_animation(constantes.RUTA_DINO_REPOSO, 4, constantes.ESCALA),
-            "muriendo": Utils.load_animation(constantes.RUTA_DINO_MURIENDO, 3, constantes.ESCALA)
+            "muriendo": Utils.load_animation(constantes.RUTA_DINO_MURIENDO, 2, constantes.ESCALA)
         }
 
         # Posicion del jugador
@@ -67,7 +67,11 @@ class Jugador:
             self.cronometro_animacion = 0
 
     def _calcular_velocidad_animacion(self):
-        if not self.moviendose:
+
+        if self.animacion_actual == self.animaciones.get("caminando"):
+           return self.velocidad_animacion
+        elif self.animacion_actual == self.animaciones.get("reposo"):
             return self.velocidad_animacion / 2
         else:
-            return self.velocidad_animacion
+            return self.velocidad_animacion / 4
+
