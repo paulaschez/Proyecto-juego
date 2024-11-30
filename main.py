@@ -1,188 +1,151 @@
-import pygame
 import random
-
+import pygame
 import constantes
-from Utils import Utils
 
-# Inicialización de Pygame
+from Jugador import Jugador
+from Plataforma import Plataforma
+from Puente import Puente
+
 pygame.init()
 
-# Configuración de la pantalla
-ANCHO, ALTO = 800, 600
-screen = pygame.display.set_mode((ANCHO, ALTO))
-pygame.display.set_caption("Juego de Puentes")
+(alto, ancho) = constantes.TAMANIO_PANTALLA
 
-# Colores
-COLOR_FONDO = (135, 206, 235)  # Azul cielo
-COLOR_PLATAFORMA = (100, 100, 100)  # Gris oscuro
-COLOR_JUGADOR = (255, 69, 0)  # Naranja
-COLOR_PUENTE = (0, 0, 0)  # Negro
+pantalla = pygame.display.set_mode((ancho, alto))
+pygame.display.set_caption("DinoDash")
 
-# Parámetros del juego
-VELOCIDAD_CRECE_PUENTE = 5
-VELOCIDAD_DESPLAZAMIENTO_PANTALLA = 5
-posicion_jugador_x = 400
-posicion_jugador_y = ALTO - 100
-IMAGEN_FONDO = pygame.image.load("media/fondo.jpg")
+imagen_fondo = pygame.image.load(constantes.RUTA_IMG_FONDO)
 posicion_fondo = 0
-
-# Parametros jugador animacion
-reposo_imagenes =  Utils.load_animation(constantes.RUTA_DINO_REPOSO, 4, constantes.ESCALA)
-imagen_rect = reposo_imagenes[0].get_rect()
-TAMAÑO_JUGADOR = imagen_rect.width
-cron_animaciones = 0
-velocidad_animacion = 0.2
-sprite_actual = 0
-
-caminando_imagenes = Utils.load_animation(constantes.RUTA_DINO_CAMINANDO, 6, constantes.ESCALA)
-
-
-# Listas de plataformas y variables del puente
-plataformas = []
-altura_puente = 0
-creciendo_puente = False
-puente_caido = False
-longitud_puente = 0
-moviendo_jugador = False
-plataforma_index = 0
 desplazamiento_fondo = False
-desplazamiento_actual = 0  # Cantidad desplazada hasta ahora
+desplazamiento_actual = 0
+
+plataformas = []
+plataforma_index = 0
+
 mantenido = False
 
-# ancho de la primera plataforma
-ancho =  ANCHO / 2 + TAMAÑO_JUGADOR * 2
-plataformas.append(pygame.Rect(0, posicion_jugador_y, ancho, 20))
+jugador = Jugador()
+puente = Puente()
 
-# Generación de plataformas aleatorias
+# Generacion primera plataforma
+plataformas.append(Plataforma(0, ancho / 2 + jugador.rect.width * 2 ))
+
+
 def generar_plataforma(x_pos):
     while True:
-        ancho = random.randint(50, 150)
-        yield pygame.Rect(x_pos, posicion_jugador_y, ancho, 20)
+        ancho_plat = random.randint(50, 150)
+        yield Plataforma(x_pos, ancho_plat)
 
-# Inicialización de plataformas
-x_inicial = plataformas[0].width + random.randint(100, 200)
-for _ in range(5):  # Comenzamos con 5 plataformas
+def generar_espacio(index = -1):
+    while True:
+        yield plataformas[index].rect.width + random.randint(100, 200)
 
+# Inicializacion de plataformas
+x_inicial = next(generar_espacio(0))
+
+for _ in range(5): # Se comienza añadiendo 5 plataformas
     plataformas.append(next(generar_plataforma(x_inicial)))
-    x_inicial += plataformas[-1].width + random.randint(100, 200)
+    x_inicial += next(generar_espacio())
 
+# Verifica que el puente haya alcanzado la siguiente plataforma y no la supere
+def verificar_alcance_puente():
+    pos_final_puente = plataformas[plataforma_index].rect.right + puente.longitud
+    siguiente_plataforma = plataformas[plataforma_index + 1]
 
+    return siguiente_plataforma.rect.left <= pos_final_puente <= siguiente_plataforma.rect.right
 
 # Bucle del juego
 running = True
+
 while running:
-    # Manejo de eventos
+    # Manejo de enventos
     for event in pygame.event.get():
+        # Si el jugador cierra el juego se termina el bucle, y el juego
         if event.type == pygame.QUIT:
             running = False
-
-        elif not moviendo_jugador:
+        # Si el dinosaurio no esta en movimiento
+        elif not jugador.moviendose:
+            # Si el jugador mantiene presionada la barra espaciadora (solo cuando esta quieto el dinosaurio)
+            # crece el puente
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE and not puente_caido:
-                    creciendo_puente = True
+                if event.key == pygame.K_SPACE and not puente.caido and not puente.cayendo:
+                    puente.creciendo = True
                     mantenido = True
             elif event.type == pygame.KEYUP and mantenido:
                 if event.key == pygame.K_SPACE:
-                    creciendo_puente = False
-                    puente_caido = True# El puente cae al soltar la barra
+                    puente.creciendo = False
+                    puente.cayendo = True
                     mantenido = False
 
+    jugador.actualizar_animacion()
+    puente.actualizar()
 
-    # Animacion reposo
-    if not moviendo_jugador:
-        cron_animaciones += velocidad_animacion / 2
-    else:
-        cron_animaciones += velocidad_animacion
+    if puente.caido:
+        puente.caido = False
 
-    if cron_animaciones >= 1:
-        if not moviendo_jugador:
-            sprite_actual = (sprite_actual + 1) % len(reposo_imagenes)
+        if verificar_alcance_puente():
+            jugador.moviendose = True
+            jugador.cambiar_animacion("caminando")
         else:
-            sprite_actual = (sprite_actual + 1) % len(caminando_imagenes)
-        cron_animaciones = 0
-
-    # Lógica del puente
-    if creciendo_puente:
-        altura_puente += VELOCIDAD_CRECE_PUENTE
-    elif puente_caido:
-        longitud_puente = altura_puente  # Guardamos la altura como longitud del puente caído
-        altura_puente = 0  # Reiniciamos la altura
-        puente_caido = False
-
-        # Verificación del alcance del puente
-        posicion_final_puente = plataformas[plataforma_index].right + longitud_puente
-        siguiente_plataforma = plataformas[plataforma_index + 1] if plataforma_index + 1 < len(plataformas) else None
-
-        # Comprobamos si el puente cae sobre la siguiente plataforma
-        if siguiente_plataforma and siguiente_plataforma.left <= posicion_final_puente <= siguiente_plataforma.right:
-            # Éxito: mueve al jugador a la siguiente plataforma
-            moviendo_jugador = True
-        else:
-            # Falla: el jugador cae
             print("¡Has caído! Intenta de nuevo.")
-            running = False  # Termina el juego
+            running = False  # Termina el juego"""
 
-    # Movimiento del jugador o desplazamiento de plataformas
-    if moviendo_jugador:
-        # Se calcula el desplazamiento cuando comienza el movimiento
-        if desplazamiento_actual == 0:
-            desplazamiento_objetivo = plataformas[plataforma_index + 1].left - posicion_jugador_x
-
-        # Desplazar plataformas gradualmente
-        if desplazamiento_actual < desplazamiento_objetivo:
-            for plataforma in plataformas:
-                plataforma.x -= VELOCIDAD_DESPLAZAMIENTO_PANTALLA
-            desplazamiento_actual += VELOCIDAD_DESPLAZAMIENTO_PANTALLA
-        else:
-            # Si el desplazamiento se completó, alinea el jugador y reinicia
-            plataforma_index += 1
-            desplazamiento_actual = 0  # Reinicia el desplazamiento
-            moviendo_jugador = False  # Deja de mover al jugador
-            longitud_puente = 0  # Reinicia la longitud del puente
-            sprite_actual = 0
-
-
-
-
-
-    while len(plataformas) < 5:
-        # Generar nueva plataforma al final
-        nueva_x = plataformas[-1].right + random.randint(100, 200)
-        plataformas.append(next(generar_plataforma(nueva_x)))
-
-    if plataformas[0].right < 0:
-        plataformas.pop(0)
-        plataforma_index-=1
-
-    # Dibujado de la pantalla
-    screen.blit(IMAGEN_FONDO, (posicion_fondo, 0))
-    screen.blit(IMAGEN_FONDO,  (posicion_fondo + screen.get_width(), 0))
-    if moviendo_jugador:
+    # Mientras el jugador se mueve
+    if jugador.moviendose:
+        # Se desplaza el fondo
         posicion_fondo -= 0.5
 
-    if posicion_fondo <= -screen.get_width():
+
+        # Se calcula el desplazamiento objetivo cuando comienza el movimiento
+        if desplazamiento_actual == 0:
+            desplazamiento_objetivo = plataformas[plataforma_index + 1].rect.left - jugador.posicion_jugador_x
+
+        # Se desplazan las plataformas gradualmente hasta que llega al objetivo
+        if desplazamiento_actual < desplazamiento_objetivo:
+            for plataforma in plataformas:
+                plataforma.rect.x -= constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
+            desplazamiento_actual += constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
+        else:
+            # Si el desplazamiento se completó, alinea el jugador y reinicia
+
+            plataforma_index += 1 # Se aumenta el indice de la plataforma en la que se encuentra
+            desplazamiento_actual = 0  # Reinicia el desplazamiento
+            jugador.moviendose = False  # Deja de mover al jugador
+            jugador.cambiar_animacion("reposo") # Cambia la animacion por la de reposo
+            puente.reiniciar()  # Reinicia la longitud del puente
+
+
+    # Mientras que las plataformas que estan en el array sea menor que cinco, seguira añadadiendo una al final
+    while len(plataformas) < 5:
+        # Generar nueva plataforma al final
+        nueva_x = plataformas[-1].rect.right + random.randint(100, 200)
+        plataformas.append(next(generar_plataforma(nueva_x)))
+
+    # Eliminar las plataformas de la izquierda que se salgan de la pantalla
+    if plataformas[0].rect.right < 0:
+        plataformas.pop(0)
+        plataforma_index -= 1
+
+
+    # Dibujado de pantalla
+    pantalla.blit(imagen_fondo, (posicion_fondo, 0))
+    pantalla.blit(imagen_fondo, (posicion_fondo + pantalla.get_width(), 0))
+
+    if posicion_fondo <= -pantalla.get_width():
         posicion_fondo = 0
 
 
-    # Dibujar plataformas
+    # Dibujado de plataformas
     for plataforma in plataformas:
-        pygame.draw.rect(screen, COLOR_PLATAFORMA, plataforma)
+        plataforma.draw(pantalla)
 
-    # Dibujar jugador
-    if not moviendo_jugador:
-        screen.blit(reposo_imagenes[sprite_actual], (posicion_jugador_x, posicion_jugador_y - imagen_rect.height +10 ) )
-    else:
-        screen.blit(caminando_imagenes[sprite_actual], (posicion_jugador_x, posicion_jugador_y - imagen_rect.height +10 ) )
+    # Dibujado de jugador
+    jugador.draw(pantalla)
 
-    # Dibujar puente
-    if creciendo_puente:
-        pygame.draw.line(screen, COLOR_PUENTE, (plataformas[plataforma_index].right, posicion_jugador_y),
-                         (plataformas[plataforma_index].right, posicion_jugador_y - altura_puente), 5)
-    elif longitud_puente > 0:
-        pygame.draw.line(screen, COLOR_PUENTE, (plataformas[plataforma_index].right, posicion_jugador_y),
-                         (plataformas[plataforma_index].right + longitud_puente, posicion_jugador_y), 5)
+    # Dibujado de puente
+    puente.dibujar(pantalla, plataformas[plataforma_index].rect)
 
     pygame.display.flip()
-    pygame.time.Clock().tick(60)  # 60 FPS
+    pygame.time.Clock().tick(60)
 
 pygame.quit()
+

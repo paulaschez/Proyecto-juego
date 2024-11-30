@@ -20,6 +20,7 @@ class Puente:
     def actualizar(self):
 
         if self.creciendo:
+            print(f"EL PUENTE ESTA CRECIENDO")
             self.angulo = 90
             self.altura += self.velocidad_crecimiento
         elif self.cayendo:
@@ -31,9 +32,10 @@ class Puente:
                 self.angulo = 0  # Es horizontal
                 self.cayendo = False  # Termina la caída
                 self.caido = True  # El puente terminó de caer
-        elif self.caido:
+
+        """elif self.caido:
             self.altura = 0 #Se reinicia la altura
-            self.caido = False
+            self.caido = False"""
 
     def reiniciar(self):
         self.altura = 0
@@ -45,7 +47,7 @@ class Puente:
 
     def dibujar(self, pantalla, plataforma_actual):
         if self.creciendo:
-            pygame.draw.line(pantalla, constantes.COLOR_PUENTE, (plataforma_actual.rect.right, constantes.POSICION_J_Y),
+            pygame.draw.line(pantalla, constantes.COLOR_PUENTE, (plataforma_actual.right, constantes.POSICION_J_Y),
                              (plataforma_actual.right, constantes.POSICION_J_Y - self.altura), 5)
 
         elif self.cayendo:
@@ -55,7 +57,7 @@ class Puente:
                              (plataforma_actual.right, constantes.POSICION_J_Y),
                              (extremo_x, extremo_y), 5)
         elif self.angulo == 0:
-            pygame.draw.line(pantalla, constantes.COLOR_PUENTE, (plataforma_actual.rect.right, constantes.POSICION_J_Y),
+            pygame.draw.line(pantalla, constantes.COLOR_PUENTE, (plataforma_actual.right, constantes.POSICION_J_Y),
                              (plataforma_actual.right + self.longitud, constantes.POSICION_J_Y), 5)
 
 

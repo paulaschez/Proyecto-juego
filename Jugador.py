@@ -1,6 +1,5 @@
 import constantes
 from Utils import Utils
-from constantes import  POSICION_J_X, POSICION_J_Y
 
 
 class Jugador:
@@ -20,8 +19,8 @@ class Jugador:
         }
 
         # Posicion del jugador
-        self.posicion_jugador_x = POSICION_J_X
-        self.posicion_jugador_y = POSICION_J_Y
+        self.posicion_jugador_x = constantes.POSICION_J_X
+        self.posicion_jugador_y = constantes.POSICION_J_Y
 
         # Estado del jugador
         self.moviendose = False
@@ -34,8 +33,8 @@ class Jugador:
 
 
 
-    def draw(self, screen):
-        screen.blit(self.animacion_actual[self.indice_animacion], self.rect)
+    def draw(self, pantalla):
+        pantalla.blit(self.animacion_actual[self.indice_animacion], (self.posicion_jugador_x, self.posicion_jugador_y - self.rect.height + 10), self.rect)
 
     def cambiar_animacion(self, accion):
         """
@@ -58,14 +57,14 @@ class Jugador:
 
 
     def actualizar_animacion(self):
+
         # Obtiene la velocidad a la que ira la animacion
-        self.cronometro_animacion = self._calcular_velocidad_animacion()
+        self.cronometro_animacion += self._calcular_velocidad_animacion()
 
         # Segun el tipo de animacion se reiniciara cuando terminen las imagenes
         if self.cronometro_animacion >= 1:
             self.indice_animacion = (self.indice_animacion + 1) % len(self.animacion_actual)
             self.cronometro_animacion = 0
-
 
     def _calcular_velocidad_animacion(self):
         if not self.moviendose:

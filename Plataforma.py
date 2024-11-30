@@ -10,3 +10,4 @@ class Plataforma:
     def draw(self, pantalla):
         pygame.draw.rect(pantalla, constantes.COLOR_PLATAFORMA, self.rect)
 
+
