@@ -13,7 +13,7 @@ class Puente:
         self.caido = False
 
         self.velocidad_crecimiento = constantes.VELOCIDAD_CRECIMIENTO_PUENTE
-        self.velocidad_caida = constantes.VELOCIDAD_CRECIMIENTO_PUENTE
+        self.velocidad_caida = constantes.VELOCIDAD_CAIDA_PUENTE
 
         # Cargar la imagen del puente
         self.segmento_original = pygame.image.load("media/puente/watewatecontomate.png").convert_alpha()

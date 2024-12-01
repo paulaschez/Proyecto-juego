@@ -25,8 +25,7 @@ jugador = Jugador()
 plataformas = []
 plataforma_index = 0
 # Generacion primera plataforma
-plataformas.append(Plataforma(0, ancho / 2 + jugador.rect.width * 2 ))
-
+plataformas.append(Plataforma(0, constantes.POSICION_J_X + jugador.rect.width ))
 
 
 puente = Puente()
@@ -49,12 +48,15 @@ sonido_caida = pygame.mixer.Sound("media/musica/game_over.mp3")
 sonido_precision = pygame.mixer.Sound("media/musica/precision.mp3")
 
 puntuacion = 0
+
 precision = 0
 mostrar_perfecto = False
-fuente_puntuacion = pygame.font.Font(None, 36)
+fuente_puntuacion = pygame.font.Font(constantes.RUTA_FUENTE, 36)
+texto_puntuacion = fuente_puntuacion.render(f"Puntuacion: {puntuacion}", True, (0, 0, 0))
+pos_puntuacion = 0
 
 mostrar_tutorial = True
-fuente_tutorial = pygame.font.Font(None, 30)
+fuente_tutorial = pygame.font.Font(constantes.RUTA_FUENTE, 20)
 texto_tutorial1 = fuente_tutorial.render(
             "Presiona 'M' para mutear o desmutear la música", True, (0, 0, 0)
         )
@@ -65,13 +67,32 @@ texto_tutorial3 = fuente_tutorial.render(
     "Presiona ENTER comenzar", True, (0, 0, 0)
 )
 
+def dibujar_fondo():
+    pantalla.blit(imagen_fondo, (posicion_fondo, 0))
+    pantalla.blit(imagen_fondo, (posicion_fondo + pantalla.get_width(), 0))
+
+def dibujar_plataformas():
+    # Dibujado de plataformas
+    for plataforma_ in plataformas:
+        plataforma_.draw(pantalla)
+
+def dibujar_puntuacion(destino_x):
+    global pos_puntuacion
+    if  jugando:
+        pos_puntuacion = destino_x
+    else:
+        if pos_puntuacion < destino_x:
+            pos_puntuacion += constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA*2
+
+
+    pantalla.blit(texto_puntuacion, (pos_puntuacion, 40))
+
 
 def desplazar_fondo():
     global posicion_fondo
     if jugador.moviendose:
         posicion_fondo -= 0.5
-    pantalla.blit(imagen_fondo, (posicion_fondo, 0))
-    pantalla.blit(imagen_fondo, (posicion_fondo + pantalla.get_width(), 0))
+    dibujar_fondo()
 
     if posicion_fondo <= -pantalla.get_width():
         posicion_fondo = 0
@@ -129,7 +150,7 @@ def reiniciar_juego():
     pygame.mixer.music.set_volume(0.2)
 
     plataformas.clear()
-    plataformas.append(Plataforma(0, ancho / 2 + jugador.rect.width * 2))
+    plataformas.append(Plataforma(0, constantes.POSICION_J_X + jugador.rect.width))
     plataforma_index = 0
 
     jugador = Jugador()
@@ -168,8 +189,7 @@ while running:
                     if mute:
                         mute = False
                         pygame.mixer.music.set_volume(0.2)
-                        if not pygame.mixer.music.get_busy():
-                            pygame.mixer.music.play(-1)
+
                     else:
                         mute= True
                         pygame.mixer.music.set_volume(0)
@@ -200,6 +220,7 @@ while running:
 
 
     if jugando:
+        pantalla_game_over.reiniciar()
         jugador.actualizar_animacion()
         puente.actualizar(puntuacion)
 
@@ -269,16 +290,14 @@ while running:
         # Dibujado de pantalla
         desplazar_fondo()
 
-        texto_puntuacion = fuente_puntuacion.render(f"Puntuacion: {puntuacion}", True, (0, 0, 0))
-        pantalla.blit(texto_puntuacion, (10, 40))
+        dibujar_plataformas()
+
+        dibujar_puntuacion(10)
 
         if mostrar_perfecto:
             texto_precision = fuente_puntuacion.render("PERFECTO", True, (0, 0, 0))
             pantalla.blit(texto_precision, (plataformas[plataforma_index+1].rect.x, 300))
 
-        # Dibujado de plataformas
-        for plataforma in plataformas:
-            plataforma.draw(pantalla)
 
 
         if mute:
@@ -299,6 +318,13 @@ while running:
 
         pygame.display.flip()
     else:
+
+        dibujar_fondo()
+        jugador.draw(pantalla)
+        dibujar_puntuacion(constantes.ANCHO_PANTALLA / 2 - texto_puntuacion.get_width() / 2)
+        dibujar_plataformas()
+
+        pantalla_game_over.actualizar()
         pantalla_game_over.mostrar(pantalla)
         pygame.display.flip()  # Actualiza la pantalla
     pygame.time.Clock().tick(60)
