@@ -48,11 +48,11 @@ sonido_caida = pygame.mixer.Sound("media/musica/game_over.mp3")
 sonido_precision = pygame.mixer.Sound("media/musica/precision.mp3")
 
 puntuacion = 0
-
 precision = 0
 mostrar_perfecto = False
 fuente_puntuacion = pygame.font.Font(constantes.RUTA_FUENTE, 36)
 texto_puntuacion = fuente_puntuacion.render(f"Puntuacion: {puntuacion}", True, (0, 0, 0))
+
 pos_puntuacion = 0
 
 mostrar_tutorial = True
@@ -77,7 +77,9 @@ def dibujar_plataformas():
         plataforma_.draw(pantalla)
 
 def dibujar_puntuacion(destino_x):
-    global pos_puntuacion
+
+    global pos_puntuacion, texto_puntuacion
+    texto_puntuacion = fuente_puntuacion.render(f"Puntuacion: {puntuacion}", True, (0, 0, 0))
     if  jugando:
         pos_puntuacion = destino_x
     else:

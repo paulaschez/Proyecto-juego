@@ -58,20 +58,3 @@ class Plataforma:
                 constantes.POSICION_J_Y,
             ),
         )
-        """"# Dibujar el borde izquierdo
-        pantalla.blit(self.borde_izquierdo, (self.pos_x - vel_desplazamiento, constantes.POSICION_J_Y))
-
-        # Inicializar la posición actual para el segmento central
-        tamanio = self.borde_izquierdo.get_width()
-
-        # Ajustar la longitud de la parte visible del centro (segmento central de la plataforma)
-        longitud_visible = self.ancho - self.borde_izquierdo.get_width() - self.borde_derecho.get_width()
-
-        # Dibujar el centro de la plataforma
-        while tamanio < longitud_visible:
-            pantalla.blit(self.centro_completo, (self.pos_x - vel_desplazamiento + tamanio, constantes.POSICION_J_Y))
-            tamanio += self.centro_ancho
-
-        # Dibujar el borde derecho
-        pantalla.blit(self.borde_derecho,
-                      (self.pos_x - vel_desplazamiento + tamanio, constantes.POSICION_J_Y))"""
