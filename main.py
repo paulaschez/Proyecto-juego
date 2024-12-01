@@ -201,7 +201,7 @@ while running:
 
     if jugando:
         jugador.actualizar_animacion()
-        puente.actualizar()
+        puente.actualizar(puntuacion)
 
         if puente.caido:
             puente.caido = False
