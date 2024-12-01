@@ -6,17 +6,19 @@ import constantes
 class Plataforma:
     def __init__(self, pos_x, ancho):
         self.rect = pygame.Rect(pos_x, constantes.POSICION_J_Y, ancho, constantes.ALTO_PLATAFORMA)
+
+
         self.mitad = self.rect.width / 2
 
         self.ancho = ancho
         self.pos_x = pos_x
 
-        self.centro_completo = pygame.image.load("media/plataforma/plat_central3.png").convert_alpha()
+        self.centro_completo = pygame.image.load("media/graficos/plataforma/plat_central.png").convert_alpha()
         self.centro_ancho = self.centro_completo.get_width()
         self.centro_alto = self.centro_completo.get_height()
 
-        self.borde_izquierdo = pygame.image.load("media/plataforma/plat_izquierda1.png").convert_alpha()
-        self.borde_derecho = pygame.image.load("media/plataforma/plat_derecha1.png").convert_alpha()
+        self.borde_izquierdo = pygame.image.load("media/graficos/plataforma/plat_izquierda.png").convert_alpha()
+        self.borde_derecho = pygame.image.load("media/graficos/plataforma/plat_derecha.png").convert_alpha()
 
     def actualizar(self):
         # Actualizar la posición de la plataforma (desplazarse a la izquierda)

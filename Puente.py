@@ -16,9 +16,11 @@ class Puente:
         self.velocidad_caida = constantes.VELOCIDAD_CAIDA_PUENTE
 
         # Cargar la imagen del puente
-        self.segmento_original = pygame.image.load("media/puente/watewatecontomate.png").convert_alpha()
-        self.segmento_width = self.segmento_original.get_width()
-        self.segmento_height = self.segmento_original.get_height()
+        self.imagen_puente_completo = pygame.image.load("media/graficos/puente/watewatecontomate.png").convert_alpha()
+
+
+        self.puente_completo_width = self.imagen_puente_completo.get_width()
+        self.puente_completo_height = self.imagen_puente_completo.get_height()
 
 
     def actualizar(self, puntuacion):
@@ -61,17 +63,17 @@ class Puente:
         if self.creciendo or self.cayendo or self.angulo == 0:
             # Calcular la altura/longitud visible
             if self.creciendo:
-                altura_visible = self.altura
+                tamanio_adaptado = self.altura
             else:
-                altura_visible = self.longitud
+                tamanio_adaptado = self.longitud
 
 
             # Recortar la parte visible del puente
-            puente_tamanio_adaptado = pygame.Surface((self.segmento_width, altura_visible), pygame.SRCALPHA)
+            puente_tamanio_adaptado = pygame.Surface((self.puente_completo_width, tamanio_adaptado), pygame.SRCALPHA)
             puente_tamanio_adaptado.blit(
-                self.segmento_original,
+                self.imagen_puente_completo,
                 (0, 0),
-                (0, self.segmento_height - altura_visible, self.segmento_width, altura_visible)
+                (0, self.puente_completo_height - tamanio_adaptado, self.puente_completo_width, tamanio_adaptado)
             )
 
             # Calcular la posición del puente
@@ -80,7 +82,7 @@ class Puente:
 
             if self.angulo == 90:  # Vertical (creciendo)
                 x_destino = x_base
-                y_destino = y_base - altura_visible
+                y_destino = y_base - tamanio_adaptado
             else:  # Cayendo o horizontal
                 # Rotamos la imagen del puente
                 puente_rotado = pygame.transform.rotate(puente_tamanio_adaptado, self.angulo -90)
@@ -92,6 +94,6 @@ class Puente:
                 puente_tamanio_adaptado = puente_rotado
 
             # Dibujar el puente en la pantalla
-            pantalla.blit(puente_tamanio_adaptado, (x_destino- self.segmento_width, y_destino))
+            pantalla.blit(puente_tamanio_adaptado, (x_destino - self.puente_completo_width, y_destino))
 
 

@@ -40,8 +40,8 @@ pygame.mixer.music.set_volume(0.2)
 pygame.mixer.music.play(-1)
 mute = False
 
-img_mute = pygame.transform.scale(pygame.image.load("media/mute.png"), (50,35))
-img_unmute = pygame.transform.scale(pygame.image.load("media/unmute.png"), (50,35))
+img_mute = pygame.transform.scale(pygame.image.load("media/graficos/pantalla_principal/mute.png"), (50, 35))
+img_unmute = pygame.transform.scale(pygame.image.load("media/graficos/pantalla_principal/unmute.png"), (50, 35))
 
 # Cargar efecto sonoro
 sonido_exito = pygame.mixer.Sound("media/musica/exito.mp3")
@@ -140,7 +140,7 @@ for _ in range(5): # Se comienza añadiendo 5 plataformas
 # Verifica que el puente haya alcanzado la siguiente plataforma y no la supere
 def verificar_alcance_puente():
     global pos_final_puente
-    pos_final_puente = plataformas[plataforma_index].rect.right + puente.longitud - puente.segmento_width
+    pos_final_puente = plataformas[plataforma_index].rect.right + puente.longitud - puente.puente_completo_width
     siguiente_plataforma = plataformas[plataforma_index + 1]
 
     return siguiente_plataforma.rect.left <= pos_final_puente <= siguiente_plataforma.rect.right
