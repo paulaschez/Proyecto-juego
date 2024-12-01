@@ -19,17 +19,85 @@ posicion_fondo = 0
 desplazamiento_fondo = False
 desplazamiento_actual = 0
 
-plataformas = []
-plataforma_index = 0
-
-mantenido = False
 
 jugador = Jugador()
-puente = Puente()
 
+plataformas = []
+plataforma_index = 0
 # Generacion primera plataforma
 plataformas.append(Plataforma(0, ancho / 2 + jugador.rect.width * 2 ))
 
+
+
+puente = Puente()
+pos_final_puente = 0
+mantenido = False
+
+pygame.mixer.init()
+# Cargar música de fondo
+pygame.mixer.music.load("media/musica/musica_fondo.mp3")
+pygame.mixer.music.set_volume(0.2)
+pygame.mixer.music.play(-1)
+mute = False
+
+img_mute = pygame.transform.scale(pygame.image.load("media/mute.png"), (50,35))
+img_unmute = pygame.transform.scale(pygame.image.load("media/unmute.png"), (50,35))
+
+# Cargar efecto sonoro
+sonido_exito = pygame.mixer.Sound("media/musica/exito.mp3")
+sonido_caida = pygame.mixer.Sound("media/musica/game_over.mp3")
+sonido_precision = pygame.mixer.Sound("media/musica/ precision.mp3")
+
+puntuacion = 0
+precision = 0
+mostrar_perfecto = False
+fuente_puntuacion = pygame.font.Font(None, 36)
+
+mostrar_tutorial = True
+fuente_tutorial = pygame.font.Font(None, 30)
+texto_tutorial1 = fuente_tutorial.render(
+            "Presiona 'M' para mutear o desmutear la música", True, (0, 0, 0)
+        )
+texto_tutorial2 = fuente_tutorial.render(
+    "Presiona la barra espaciadora para hacer crecer el puente", True, (0, 0, 0)
+)
+texto_tutorial3 = fuente_tutorial.render(
+    "Presiona ENTER comenzar", True, (0, 0, 0)
+)
+
+
+def desplazar_fondo():
+    global posicion_fondo
+    if jugador.moviendose:
+        posicion_fondo -= 0.5
+    pantalla.blit(imagen_fondo, (posicion_fondo, 0))
+    pantalla.blit(imagen_fondo, (posicion_fondo + pantalla.get_width(), 0))
+
+    if posicion_fondo <= -pantalla.get_width():
+        posicion_fondo = 0
+
+def gestionar_plataformas():
+
+    ancho_max = 200
+    # Añadir nuevas plataformas si hay menos de 5
+    while len(plataformas) < 5:
+
+        if puntuacion > 10:
+            ancho_max = 150
+        elif puntuacion > 30:
+            ancho_max = 100
+        elif puntuacion > 50:
+            ancho_max = 75
+
+
+        nueva_x = plataformas[-1].rect.right + random.randint(50, ancho_max)
+        plataformas.append(next(generar_plataforma(nueva_x)))
+
+    # Eliminar plataformas fuera de la pantalla
+    if plataformas[0].rect.right < 0:
+        plataformas.pop(0)
+        global plataforma_index
+        plataforma_index -= 1
 
 def generar_plataforma(x_pos):
     while True:
@@ -38,7 +106,7 @@ def generar_plataforma(x_pos):
 
 def generar_espacio(index = -1):
     while True:
-        yield plataformas[index].rect.width + random.randint(100, 200)
+        yield plataformas[index].rect.width + random.randint(75, 200)
 
 # Inicializacion de plataformas
 x_inicial = next(generar_espacio(0))
@@ -49,10 +117,33 @@ for _ in range(5): # Se comienza añadiendo 5 plataformas
 
 # Verifica que el puente haya alcanzado la siguiente plataforma y no la supere
 def verificar_alcance_puente():
+    global pos_final_puente
     pos_final_puente = plataformas[plataforma_index].rect.right + puente.longitud
     siguiente_plataforma = plataformas[plataforma_index + 1]
 
     return siguiente_plataforma.rect.left <= pos_final_puente <= siguiente_plataforma.rect.right
+
+def reiniciar_juego():
+    global jugador, puente, plataformas, plataforma_index, puntuacion, jugando, desplazamiento_actual, mute
+    mute = False
+    pygame.mixer.music.play()
+    pygame.mixer.music.set_volume(0.2)
+    plataformas.clear()
+    plataformas.append(Plataforma(0, ancho / 2 + jugador.rect.width * 2))
+    plataforma_index = 0
+
+    jugador = Jugador()
+    puente = Puente()
+    puntuacion = 0
+    pos_x_plataforma = next(generar_espacio(0))
+    for _ in range(5):
+        plataformas.append(next(generar_plataforma(pos_x_plataforma)))
+        pos_x_plataforma += next(generar_espacio())
+    jugando = True
+    desplazamiento_actual = 0
+    jugador.posicion_jugador_y = constantes.POSICION_J_Y
+
+
 
 # Bucle del juego
 running = True
@@ -66,40 +157,47 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        # Si el juego ha terminado y estamos mostrando la pantalla de Game Over
-        if not jugando:
-            resultado = pantalla_game_over.manejar_eventos(event)
-            if resultado == 'reiniciar':
-                # Reinicia el juego
-                jugador = Jugador()
-                puente = Puente()
-                plataformas.clear()
-                plataformas.append(Plataforma(0, ancho / 2 + jugador.rect.width * 2))
-                plataforma_index = 0
-                x_inicial = next(generar_espacio(0))
-                for _ in range(5):
-                    plataformas.append(next(generar_plataforma(x_inicial)))
-                    x_inicial += next(generar_espacio())
-                jugando = True  # Volver al juego
-                desplazamiento_actual = 0  # Reset desplazamiento
-                jugador.posicion_jugador_y = constantes.POSICION_J_Y  # Reset de la posición del jugador
+        if mostrar_tutorial and event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN:
+                mostrar_tutorial = False
 
-            elif resultado == 'salir':
-                running = False  # Si presionas Escape, sale del juego
-
-        # Si el dinosaurio no esta en movimiento
-        elif not jugador.moviendose:
-            # Si el jugador mantiene presionada la barra espaciadora (solo cuando esta quieto el dinosaurio)
-            # crece el puente
+        if not mostrar_tutorial:
+            # Para silenciar o reproducir la musica
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE and not puente.caido and not puente.cayendo:
-                    puente.creciendo = True
-                    mantenido = True
-            elif event.type == pygame.KEYUP and mantenido:
-                if event.key == pygame.K_SPACE:
-                    puente.creciendo = False
-                    puente.cayendo = True
-                    mantenido = False
+                if event.key == pygame.K_m:
+                    if mute:
+                        mute = False
+                        pygame.mixer.music.set_volume(0.2)
+                        if not pygame.mixer.music.get_busy():
+                            pygame.mixer.music.play(-1)
+                    else:
+                        mute= True
+                        pygame.mixer.music.set_volume(0)
+            # Si el juego ha terminado y se muestra la pantalla de GameOver
+            if not jugando:
+                resultado = pantalla_game_over.manejar_eventos(event)
+                if resultado == 'reiniciar':
+                    reiniciar_juego()
+
+                elif resultado == 'salir':
+                    running = False  # Si presionas Escape, sale del juego
+
+            # Si el dinosaurio no esta en movimiento
+            elif not jugador.moviendose:
+                # Si el jugador mantiene presionada la barra espaciadora (solo cuando esta quieto el dinosaurio)
+                # crece el puente
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE and not puente.caido and not puente.cayendo:
+                        puente.creciendo = True
+                        mantenido = True
+                elif event.type == pygame.KEYUP and mantenido:
+                    if event.key == pygame.K_SPACE:
+                        puente.creciendo = False
+                        puente.cayendo = True
+                        mantenido = False
+
+
+
 
     if jugando:
         jugador.actualizar_animacion()
@@ -110,42 +208,54 @@ while running:
             jugador.moviendose = True
             jugador.cambiar_animacion("caminando")
 
-
         # Mientras el jugador se mueve
         if jugador.moviendose:
-            # Se desplaza el fondo
-            posicion_fondo -= 0.5
-
-            if verificar_alcance_puente():
-                # Se calcula el desplazamiento objetivo cuando comienza el movimiento
-                if desplazamiento_actual == 0:
+            if desplazamiento_actual == 0:
+                if verificar_alcance_puente():
                     desplazamiento_objetivo = plataformas[plataforma_index + 1].rect.left - jugador.posicion_jugador_x
 
-                # Se desplazan las plataformas gradualmente hasta que llega al objetivo
-                if desplazamiento_actual < desplazamiento_objetivo:
-                    for plataforma in plataformas:
-                        plataforma.rect.x -= constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
-                    desplazamiento_actual += constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
-                else:
-                    # Si el desplazamiento se completó, alinea el jugador y reinicia
+                    distancia = abs(pos_final_puente - plataformas[plataforma_index + 1].rect.centerx)
+                    precision = max(0, 100 - distancia)  # Cuanto más cerca del centro, mejor precisión
 
-                    plataforma_index += 1 # Se aumenta el indice de la plataforma en la que se encuentra
+                else:
+                    desplazamiento_objetivo = puente.longitud + jugador.rect.width * 2
+
+            # Se desplazan las plataformas gradualmente hasta que llega al objetivo
+            if desplazamiento_actual < desplazamiento_objetivo:
+                for plataforma in plataformas:
+                    plataforma.rect.x -= constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
+                desplazamiento_actual += constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
+
+                # Dibujar la puntuación
+                if precision >= 95:
+                    mostrar_perfecto = True
+                    sonido_precision.play()
+
+
+
+            else:
+                if verificar_alcance_puente():
+
+                    mostrar_perfecto = False
+
+                    # Acciones al alcanzar la siguiente plataforma
+                    if precision >= 95:
+                        puntuacion += 2
+                    else:
+                        sonido_exito.play()
+                        puntuacion += 1
+
+                    precision = 0
+                    plataforma_index += 1  # Se aumenta el índice de la plataforma
                     desplazamiento_actual = 0  # Reinicia el desplazamiento
                     jugador.moviendose = False  # Deja de mover al jugador
-                    jugador.cambiar_animacion("reposo") # Cambia la animacion por la de reposo
+                    jugador.cambiar_animacion("reposo")  # Cambia a la animación de reposo
                     puente.reiniciar()  # Reinicia la longitud del puente
-            else:
-
-                if desplazamiento_actual == 0:
-                    desplazamiento_objetivo = puente.longitud + jugador.rect.width*2
-
-                # Se desplazan las plataformas gradualmente hasta que llega al objetivo
-                if desplazamiento_actual < desplazamiento_objetivo:
-                    for plataforma in plataformas:
-                        plataforma.rect.x -= constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
-                    desplazamiento_actual += constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
                 else:
-                    # Si el desplazamiento se completó, alinea el jugador y reinicia
+                    pygame.mixer.music.stop()  # Detener la música de fondo
+
+                    sonido_caida.play()
+                    # Acciones al fallar
                     jugador.cambiar_animacion("muerte")
                     jugador.posicion_jugador_y += constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
                     jugador.actualizar_animacion()
@@ -153,29 +263,33 @@ while running:
                         jugando = False
 
 
-        # Mientras que las plataformas que estan en el array sea menor que cinco, seguira añadadiendo una al final
-        while len(plataformas) < 5:
-            # Generar nueva plataforma al final
-            nueva_x = plataformas[-1].rect.right + random.randint(100, 200)
-            plataformas.append(next(generar_plataforma(nueva_x)))
-
-        # Eliminar las plataformas de la izquierda que se salgan de la pantalla
-        if plataformas[0].rect.right < 0:
-            plataformas.pop(0)
-            plataforma_index -= 1
+        gestionar_plataformas()
 
 
         # Dibujado de pantalla
-        pantalla.blit(imagen_fondo, (posicion_fondo, 0))
-        pantalla.blit(imagen_fondo, (posicion_fondo + pantalla.get_width(), 0))
+        desplazar_fondo()
 
-        if posicion_fondo <= -pantalla.get_width():
-            posicion_fondo = 0
+        texto_puntuacion = fuente_puntuacion.render(f"Puntuacion: {puntuacion}", True, (0, 0, 0))
+        pantalla.blit(texto_puntuacion, (10, 40))
 
+        if mostrar_perfecto:
+            texto_precision = fuente_puntuacion.render("PERFECTO", True, (0, 0, 0))
+            pantalla.blit(texto_precision, (plataformas[plataforma_index+1].rect.x, 300))
 
         # Dibujado de plataformas
         for plataforma in plataformas:
             plataforma.draw(pantalla)
+
+
+        if mute:
+            pantalla.blit(img_mute, (ancho - (img_mute.get_width()*1.25) ,40))
+        else:
+            pantalla.blit(img_unmute, (ancho - (img_unmute.get_width()*1.25),40))
+
+        if mostrar_tutorial:
+            pantalla.blit(texto_tutorial1, (ancho / 2 - texto_tutorial1.get_width() / 2, alto / 3))
+            pantalla.blit(texto_tutorial2, (ancho / 2 - texto_tutorial2.get_width() / 2, alto / 3 + 40))
+            pantalla.blit(texto_tutorial3, (ancho / 2 - texto_tutorial3.get_width() / 2, alto / 3 + 80))
 
         # Dibujado de jugador
         jugador.draw(pantalla)
