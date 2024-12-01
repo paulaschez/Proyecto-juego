@@ -16,8 +16,7 @@ class Puente:
         self.velocidad_caida = constantes.VELOCIDAD_CRECIMIENTO_PUENTE
 
         # Cargar la imagen del puente
-        self.segmento_original = pygame.image.load("media/puente/puente.jpeg").convert_alpha()
-        self.segmento_original = pygame.transform.scale(self.segmento_original, (28,300))
+        self.segmento_original = pygame.image.load("media/puente/watewatecontomate.png").convert_alpha()
         self.segmento_width = self.segmento_original.get_width()
         self.segmento_height = self.segmento_original.get_height()
 

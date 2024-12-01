@@ -46,7 +46,7 @@ img_unmute = pygame.transform.scale(pygame.image.load("media/unmute.png"), (50,3
 # Cargar efecto sonoro
 sonido_exito = pygame.mixer.Sound("media/musica/exito.mp3")
 sonido_caida = pygame.mixer.Sound("media/musica/game_over.mp3")
-sonido_precision = pygame.mixer.Sound("media/musica/ precision.mp3")
+sonido_precision = pygame.mixer.Sound("media/musica/precision.mp3")
 
 puntuacion = 0
 precision = 0
@@ -77,20 +77,10 @@ def desplazar_fondo():
         posicion_fondo = 0
 
 def gestionar_plataformas():
-
-    ancho_max = 200
     # Añadir nuevas plataformas si hay menos de 5
     while len(plataformas) < 5:
 
-        if puntuacion > 10:
-            ancho_max = 150
-        elif puntuacion > 30:
-            ancho_max = 100
-        elif puntuacion > 50:
-            ancho_max = 75
-
-
-        nueva_x = plataformas[-1].rect.right + random.randint(50, ancho_max)
+        nueva_x = plataformas[-1].rect.right + random.randint(50, 200)
         plataformas.append(next(generar_plataforma(nueva_x)))
 
     # Eliminar plataformas fuera de la pantalla
@@ -100,8 +90,17 @@ def gestionar_plataformas():
         plataforma_index -= 1
 
 def generar_plataforma(x_pos):
+
+    ancho_max = 200
+    ancho_min = jugador.rect.width
+    if puntuacion > 10:
+        ancho_max = 150
+    elif puntuacion > 30:
+        ancho_max = 100
+    elif puntuacion > 50:
+        ancho_max = 75
     while True:
-        ancho_plat = random.randint(50, 150)
+        ancho_plat = random.randint(ancho_min, ancho_max)
         yield Plataforma(x_pos, ancho_plat)
 
 def generar_espacio(index = -1):
@@ -126,8 +125,9 @@ def verificar_alcance_puente():
 def reiniciar_juego():
     global jugador, puente, plataformas, plataforma_index, puntuacion, jugando, desplazamiento_actual, mute
     mute = False
-    pygame.mixer.music.play()
+    pygame.mixer.music.play(-1)
     pygame.mixer.music.set_volume(0.2)
+
     plataformas.clear()
     plataformas.append(Plataforma(0, ancho / 2 + jugador.rect.width * 2))
     plataforma_index = 0
@@ -218,7 +218,7 @@ while running:
                     precision = max(0, 100 - distancia)  # Cuanto más cerca del centro, mejor precisión
 
                 else:
-                    desplazamiento_objetivo = puente.longitud + jugador.rect.width * 2
+                    desplazamiento_objetivo = puente.longitud + jugador.rect.width
 
             # Se desplazan las plataformas gradualmente hasta que llega al objetivo
             if desplazamiento_actual < desplazamiento_objetivo:
