@@ -8,7 +8,35 @@ class Plataforma:
         self.rect = pygame.Rect(pos_x, constantes.POSICION_J_Y, ancho, constantes.ALTO_PLATAFORMA)
         self.mitad = self.rect.width / 2
 
-    def draw(self, pantalla):
-        pygame.draw.rect(pantalla, constantes.COLOR_PLATAFORMA, self.rect)
+        self.ancho = ancho
+        self.pos_x = pos_x
+
+        self.centro_completo = pygame.image.load("media/plataforma/plat_centro.png").convert_alpha()
+        self.centro_ancho = self.centro_completo.get_width()
+        self.centro_alto = self.centro_completo.get_height()
+
+        self.borde_izquierdo = pygame.image.load("media/plataforma/plat_izquierda.png").convert_alpha()
+        self.borde_derecho = pygame.image.load("media/plataforma/plat_derecha.png").convert_alpha()
+
+    def actualizar(self):
+        # Actualizar la posición de la plataforma (desplazarse a la izquierda)
+        self.pos_x -= constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
+        self.rect.x = self.pos_x
+
+    def draw(self, pantalla, vel_desplazamiento = 0):
+        # Dibujar el borde izquierdo
+        pantalla.blit(self.borde_izquierdo, (self.pos_x - vel_desplazamiento, constantes.POSICION_J_Y))
+
+        # Inicializar posición actual para el segmento central
+        tamanio = self.borde_izquierdo.get_width()
+
+        # Dibujar segmentos centrales
+        while tamanio + self.centro_ancho <= self.ancho - self.borde_derecho.get_width():
+            pantalla.blit(self.centro_completo, (self.pos_x - - vel_desplazamiento + tamanio, constantes.POSICION_J_Y))
+            tamanio += self.centro_ancho
+
+        # Dibujar el borde derecho
+        pantalla.blit(self.borde_derecho,
+                      (self.pos_x - vel_desplazamiento + self.ancho - self.borde_derecho.get_width(), constantes.POSICION_J_Y))
 
 

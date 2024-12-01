@@ -31,7 +31,7 @@ class Puente:
             self.longitud = self.altura
 
             if self.angulo > 0:  # Sigue bajando el puente hasta que llegue a 0°
-                self.angulo -= self.velocidad_caida
+                self.angulo -= self.velocidad_caida / 3
             else:
                 self.angulo = 0  # Es horizontal
                 self.cayendo = False  # Termina la caída
@@ -71,20 +71,18 @@ class Puente:
                 y_destino = y_base - altura_visible
             else:  # Cayendo o horizontal
                 # Rotamos la imagen del puente
-                puente_rotado = pygame.transform.rotate(puente_visible, self.angulo)
+                puente_rotado = pygame.transform.rotate(puente_visible, self.angulo -90)
 
                 # Calculamos las posiciones ajustadas para la base del puente
+
+
                 x_destino = x_base
                 y_destino = y_base - puente_rotado.get_height()
-
-                # Corregimos el desplazamiento por rotación
-                offset_x = puente_rotado.get_width() / 2 - self.segmento_width / 2
-                x_destino -= offset_x
 
                 puente_visible = puente_rotado
 
             # Dibujar el puente en la pantalla
-            pantalla.blit(puente_visible, (x_destino, y_destino))
+            pantalla.blit(puente_visible, (x_destino- self.segmento_width, y_destino))
 
 
         """if self.creciendo:

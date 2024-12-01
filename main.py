@@ -118,7 +118,7 @@ for _ in range(5): # Se comienza añadiendo 5 plataformas
 # Verifica que el puente haya alcanzado la siguiente plataforma y no la supere
 def verificar_alcance_puente():
     global pos_final_puente
-    pos_final_puente = plataformas[plataforma_index].rect.right + puente.longitud
+    pos_final_puente = plataformas[plataforma_index].rect.right + puente.longitud - puente.segmento_width
     siguiente_plataforma = plataformas[plataforma_index + 1]
 
     return siguiente_plataforma.rect.left <= pos_final_puente <= siguiente_plataforma.rect.right
@@ -223,7 +223,7 @@ while running:
             # Se desplazan las plataformas gradualmente hasta que llega al objetivo
             if desplazamiento_actual < desplazamiento_objetivo:
                 for plataforma in plataformas:
-                    plataforma.rect.x -= constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
+                    plataforma.actualizar()
                 desplazamiento_actual += constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
 
                 # Dibujar la puntuación
