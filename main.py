@@ -5,6 +5,7 @@ import constantes
 from Jugador import Jugador
 from Plataforma import Plataforma
 from Puente import Puente
+from Utils import guardar
 from pantalla_game_over import PantallaGameOver
 
 pygame.init()
@@ -85,7 +86,6 @@ def dibujar_puntuacion(destino_x):
     else:
         if pos_puntuacion < destino_x:
             pos_puntuacion += constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA*2
-
 
     pantalla.blit(texto_puntuacion, (pos_puntuacion, 40))
 
@@ -254,11 +254,8 @@ while running:
                     mostrar_perfecto = True
                     sonido_precision.play()
 
-
-
             else:
                 if verificar_alcance_puente():
-
                     mostrar_perfecto = False
 
                     # Acciones al alcanzar la siguiente plataforma
@@ -283,7 +280,9 @@ while running:
                     jugador.posicion_jugador_y += constantes.VELOCIDAD_DESPLAZAMIENTO_PANTALLA
                     jugador.actualizar_animacion()
                     if jugador.posicion_jugador_y >= jugador.rect.height + alto:
+                        guardar(puntuacion)
                         jugando = False
+
 
 
         gestionar_plataformas()

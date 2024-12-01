@@ -24,8 +24,6 @@ class Puente:
     def actualizar(self, puntuacion):
 
         # Ajustar la velocidad de crecimiento según la puntuación
-
-
         if puntuacion > 50:
             self.velocidad_crecimiento = 15
         elif puntuacion > 30:
@@ -34,10 +32,6 @@ class Puente:
             self.velocidad_crecimiento = 10
         elif puntuacion > 5:
             self.velocidad_crecimiento = 7
-
-        print(f"velocidad de crecimeinto: {self.velocidad_crecimiento}")
-        print(f"puntuacion: {puntuacion}")
-
 
         # Logica de crecimiento del puente
         if self.creciendo:

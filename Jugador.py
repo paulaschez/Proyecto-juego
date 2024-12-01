@@ -1,5 +1,5 @@
 import constantes
-from Utils import Utils
+import Utils
 
 
 class Jugador:
