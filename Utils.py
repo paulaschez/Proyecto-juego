@@ -1,6 +1,5 @@
 import json
 import os
-
 import pygame
 
 ARCHIVO_ESTADISTICAS = "estadisticas.json"
