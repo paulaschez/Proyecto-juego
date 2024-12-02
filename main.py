@@ -65,7 +65,7 @@ texto_tutorial2 = fuente_tutorial.render(
     "Presiona la barra espaciadora para hacer crecer el puente", True, (0, 0, 0)
 )
 texto_tutorial3 = fuente_tutorial.render(
-    "Presiona ENTER comenzar", True, (0, 0, 0)
+    "Presiona ENTER para comenzar", True, (0, 0, 0)
 )
 
 def dibujar_fondo():
